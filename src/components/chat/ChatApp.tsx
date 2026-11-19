@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart3, Download, FileSearch, ImageIcon, ListChecks, Menu, Share2 } from "lucide-react";
+import { BarChart3, Download, Paperclip, UploadCloud, FileSearch, ImageIcon, ListChecks, Menu, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
-import type { Conversation, Feedback, Message } from "@/lib/types";
+import type { Attachment, Conversation, Feedback, Message, Source } from "@/lib/types";
+import { validateFile } from "@/lib/files";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { FileChip } from "./FileChip";
+import { CitationPanel } from "./CitationPanel";
+import { SettingsDialog } from "./SettingsDialog";
 import { Sidebar } from "./Sidebar";
 import { AssistantMessage, UserMessage } from "./MessageView";
 import { Composer, type ComposerHandle } from "./Composer";
@@ -29,6 +34,32 @@ export function ChatApp() {
   const abort = useRef<AbortController | null>(null);
   const composer = useRef<ComposerHandle>(null);
   const bottom = useRef<HTMLDivElement>(null);
+  const [pending, setPending] = useState<Attachment[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const [cite, setCite] = useState<{ s: Source; all: Source[] } | null>(null);
+  const [settings, setSettings] = useState(false);
+
+  const pickFiles = (list: FileList) => {
+    let count = pending.length;
+    const added: Attachment[] = [];
+    for (const f of Array.from(list)) {
+      const err = validateFile(f, count);
+      if (err) { toast.error(err); continue; }
+      count++;
+      added.push({ id: api.newId(), name: f.name, size: f.size, type: f.type, progress: 0,
+        previewUrl: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
+    }
+    setPending((p) => [...p, ...added]);
+    // Simulated upload; replace with a real POST to the backend later.
+    added.forEach((a) => {
+      const t = setInterval(() => setPending((p) => p.map((x) => {
+        if (x.id !== a.id) return x;
+        const progress = Math.min(100, x.progress + 15 + Math.round(Math.random() * 20));
+        if (progress === 100) clearInterval(t);
+        return { ...x, progress };
+      })), 180);
+    });
+  };
 
   useEffect(() => {
     if (!q.data) return;
@@ -74,8 +105,9 @@ export function ChatApp() {
   const send = (text: string) => {
     let id = activeId;
     if (!id) { const c: Conversation = { id: api.newId(), title: "New chat", updatedAt: "", messages: [] }; setConvs((l) => [c, ...l]); id = c.id; setActiveId(id); }
-    const msg: Message = { id: api.newId(), role: "user", content: text, createdAt: new Date().toISOString() };
-    setConvs((l) => l.map((c) => (c.id === id ? { ...c, title: c.messages.length ? c.title : text.slice(0, 48), updatedAt: msg.createdAt, messages: [...c.messages, msg] } : c)));
+    const files = pending; setPending([]);
+    const msg: Message = { id: api.newId(), role: "user", content: text, createdAt: new Date().toISOString(), files: files.length ? files : undefined };
+    setConvs((l) => l.map((c) => (c.id === id ? { ...c, title: c.messages.length ? c.title : text.slice(0, 48), updatedAt: msg.createdAt, messages: [...c.messages, msg], files: [...(c.files ?? []), ...files] } : c)));
     run(id, text);
   };
 
@@ -96,7 +128,7 @@ export function ChatApp() {
   const sidebar = (
     <Sidebar conversations={convs} activeId={activeId} loading={q.isLoading} newDisabled={!!active && active.messages.length === 0}
       onSelect={(id) => { setActiveId(id); setDrawer(false); }} onNew={newChat}
-      onRename={(id, t) => update(id, (c) => ({ ...c, title: t }))} onDelete={remove} theme={theme} setTheme={setTheme} />
+      onRename={(id, t) => update(id, (c) => ({ ...c, title: t }))} onDelete={remove} theme={theme} setTheme={setTheme} onSettings={() => { setDrawer(false); setSettings(true); }} />
   );
   const empty = !active || active.messages.length === 0;
 
@@ -106,7 +138,10 @@ export function ChatApp() {
       <Sheet open={drawer} onOpenChange={setDrawer}>
         <SheetContent side="left" className="w-[280px] max-w-[85vw] border-0 p-0 [&>button]:hidden"><SheetTitle className="sr-only">Chats</SheetTitle>{sidebar}</SheetContent>
       </Sheet>
-      <main className="flex min-w-0 flex-1 flex-col bg-chat md:my-2 md:mr-2 md:rounded-2xl md:border md:border-border">
+      <main onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }}
+        onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) pickFiles(e.dataTransfer.files); }}
+        className="relative flex min-w-0 flex-1 flex-col bg-chat md:my-2 md:mr-2 md:rounded-2xl md:border md:border-border">
+        {dragging && <div className="pointer-events-none absolute inset-2 z-20 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary bg-background/90 text-sm"><UploadCloud className="size-8 text-primary" /><p className="font-medium">Drop files to attach</p><p className="text-muted-foreground">PDF, DOCX, TXT, MD, CSV, XLSX, images · up to 20 MB</p></div>}
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <button aria-label="Open chats" className="flex size-9 items-center justify-center rounded-[10px] hover:bg-muted md:hidden" onClick={() => setDrawer(true)}><Menu className="size-5" /></button>
           {active && !empty ? (
@@ -116,6 +151,17 @@ export function ChatApp() {
           <span className="hidden items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:flex">
             <span className="size-1.5 rounded-full bg-success" /> Aurix Pro
           </span>
+          {active?.files && active.files.length > 0 && (
+            <Popover>
+              <PopoverTrigger aria-label="Files in this chat" className="flex h-9 items-center gap-1 rounded-[10px] px-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Paperclip className="size-4" />{active.files.length}
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[260px] p-2">
+                <p className="px-1 pb-2 text-xs font-medium text-muted-foreground">Files in this chat</p>
+                <div className="flex max-h-72 flex-col gap-2 overflow-y-auto">{active.files.map((f) => <FileChip key={f.id} f={{ ...f, progress: 100 }} />)}</div>
+              </PopoverContent>
+            </Popover>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger aria-label="Share or export" disabled={empty} className="flex size-9 items-center justify-center rounded-[10px] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"><Share2 className="size-4" /></DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -143,7 +189,7 @@ export function ChatApp() {
           ) : (
             <div className="mx-auto flex max-w-[768px] flex-col gap-8 px-4 py-8">
               {active!.messages.map((m, i) => m.role === "user" ? <UserMessage key={m.id} m={m} /> : (
-                <AssistantMessage key={m.id} m={m} streaming={m.id === streamingId} isLast={i === active!.messages.length - 1}
+                <AssistantMessage key={m.id} m={m} streaming={m.id === streamingId} isLast={i === active!.messages.length - 1} onCite={(src, all) => setCite({ s: src, all })}
                   onRegenerate={regenerate} onFeedback={(f) => feedback(m.id, f)} onFollowUp={send} />
               ))}
               <div ref={bottom} />
@@ -151,10 +197,14 @@ export function ChatApp() {
           )}
         </div>
         <div className="shrink-0 px-4 pt-2 pb-4">
-          <Composer ref={composer} streaming={!!streamingId} onSend={send} onStop={() => abort.current?.abort()} />
+          <Composer ref={composer} streaming={!!streamingId} files={pending} onPick={pickFiles} onRemove={(id) => setPending((p) => p.filter((x) => x.id !== id))} onSend={send} onStop={() => abort.current?.abort()} />
           <p className="mt-2 text-center text-xs text-muted-foreground">AURIX can make mistakes. Check important info.</p>
         </div>
       </main>
+      <CitationPanel data={cite} onClose={() => setCite(null)} />
+      <SettingsDialog open={settings} onOpenChange={setSettings} theme={theme} setTheme={setTheme} canExport={!empty} onExport={exportMd}
+        onResetMemory={() => toast.success("Memory reset", { description: "AURIX will forget saved preferences." })}
+        onDeleteAll={() => { setConvs([]); setActiveId(null); localStorage.removeItem(LAST); setSettings(false); toast("All chats deleted"); }} />
     </div>
   );
 }

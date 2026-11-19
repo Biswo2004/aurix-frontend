@@ -20,7 +20,7 @@ const ORDER = ["Today", "Yesterday", "Previous 7 days", "Older"];
 type Props = {
   conversations: Conversation[]; activeId: string | null; loading: boolean; newDisabled: boolean;
   onSelect: (id: string) => void; onNew: () => void; onRename: (id: string, t: string) => void; onDelete: (id: string) => void;
-  theme: Theme; setTheme: (t: Theme) => void;
+  theme: Theme; setTheme: (t: Theme) => void; onSettings: () => void;
 };
 
 export function Sidebar(p: Props) {
@@ -103,7 +103,7 @@ export function Sidebar(p: Props) {
         </div>
         <button aria-label={`Theme: ${p.theme}. Switch theme`} onClick={() => p.setTheme(nextTheme[p.theme])}
           className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><ThemeIcon className="size-4" /></button>
-        <button aria-label="Settings" className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><Settings className="size-4" /></button>
+        <button aria-label="Settings" onClick={p.onSettings} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><Settings className="size-4" /></button>
       </div>
     </aside>
   );

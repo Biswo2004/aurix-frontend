@@ -3,7 +3,8 @@ import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { Feedback, Message } from "@/lib/types";
+import type { Feedback, Message, Source } from "@/lib/types";
+import { FileChip } from "./FileChip";
 import { LogoMark } from "./Logo";
 import { Markdown } from "./Markdown";
 
@@ -11,14 +12,15 @@ const iconBtn = "flex size-8 items-center justify-center rounded-md text-muted-f
 
 export function UserMessage({ m }: { m: Message }) {
   return (
-    <div className="msg-in flex justify-end">
+    <div className="msg-in flex flex-col items-end gap-2">
+      {m.files && m.files.length > 0 && <div className="flex max-w-[85%] flex-wrap justify-end gap-2">{m.files.map((f) => <FileChip key={f.id} f={f} />)}</div>}
       <div className="max-w-[85%] rounded-[18px] bg-user-bubble px-4 py-2 text-[15px] leading-relaxed whitespace-pre-wrap text-user-bubble-foreground">{m.content}</div>
     </div>
   );
 }
 
-export function AssistantMessage({ m, streaming, isLast, onRegenerate, onFeedback, onFollowUp }: {
-  m: Message; streaming?: boolean; isLast?: boolean;
+export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, onFeedback, onFollowUp }: {
+  m: Message; streaming?: boolean; isLast?: boolean; onCite?: (s: Source, all: Source[]) => void;
   onRegenerate?: () => void; onFeedback?: (f: Feedback) => void; onFollowUp?: (q: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -37,7 +39,7 @@ export function AssistantMessage({ m, streaming, isLast, onRegenerate, onFeedbac
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground">Sources</span>
                 {m.sources.map((s) => (
-                  <button key={s.id} title={`${s.fileName} · ${s.location}`}
+                  <button key={s.id} title={`${s.fileName} · ${s.location}`} onClick={() => onCite?.(s, m.sources!)}
                     className="flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs hover:bg-muted">
                     <span className="font-mono text-primary">[{s.id}]</span><span className="max-w-[160px] truncate">{s.fileName}</span>
                   </button>

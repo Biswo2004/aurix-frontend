@@ -9,10 +9,13 @@ export type Message = {
   sources?: Source[];
   followUps?: string[];
   feedback?: Feedback;
+  files?: Attachment[] | undefined;
 };
 export type Conversation = {
   id: string;
   title: string;
   updatedAt: string;
   messages: Message[];
+  files?: Attachment[] | undefined;
 };
+export type Attachment = { id: string; name: string; size: number; type: string; progress: number; previewUrl?: string | undefined; error?: string };

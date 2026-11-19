@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+# AGENTS
+- All backend calls go through src/lib/api.ts (mock now) so the FastAPI backend can be swapped in via VITE_API_URL.
+- File limits live in src/lib/files.ts, covered by files.test.ts.
