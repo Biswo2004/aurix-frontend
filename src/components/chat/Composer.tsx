@@ -22,7 +22,7 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string) => void
     const send = () => { const t = text.trim(); if (!t || streaming) return; onSend(t); setText(""); };
     const voice = () => {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (!SR) return toast.error("Voice input isn't supported in this browser");
+      if (!SR) { toast.error("Voice input is not supported in this browser"); return; }
       const r = new SR(); r.lang = "en-US"; r.interimResults = false;
       r.onresult = (e: any) => setText((p) => (p ? p + " " : "") + e.results[0][0].transcript);
       r.onend = () => setListening(false); setListening(true); r.start();

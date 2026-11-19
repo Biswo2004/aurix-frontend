@@ -2,7 +2,7 @@
 // swap the bodies for fetch(`${API_URL}/...`) when the backend is ready.
 import type { Conversation, Message, Source } from "./types";
 
-export const API_URL = import.meta.env.VITE_API_URL as string | undefined;
+export const API_URL = import.meta.env["VITE_API_URL"] as string | undefined;
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -86,7 +86,7 @@ export const api = {
     }
     return {
       id: uid(), role: "assistant", createdAt: new Date().toISOString(), feedback: null,
-      sources: [SAMPLE_SOURCES[0]],
+      sources: SAMPLE_SOURCES.slice(0, 1),
       followUps: ["Go deeper on this", "Give me an example", "Summarize in one line"],
     };
   },
