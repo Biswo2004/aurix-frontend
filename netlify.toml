@@ -8,3 +8,7 @@
 [build.environment]
   NITRO_PRESET = "netlify"
   NODE_VERSION = "22"
+  # The Supabase project URL and publishable (anon) key are public by design: they are
+  # committed in src/integrations/supabase/client.ts and shipped to the browser. Netlify's
+  # secrets scanner fails the build when it finds them, so mark them as safe.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY"
