@@ -9,6 +9,7 @@ import { displayName, signOut, useSession } from "@/lib/auth";
 import type { Attachment, Conversation, Feedback, Message, Source } from "@/lib/types";
 import { validateFile } from "@/lib/files";
 import { createReveal } from "@/lib/reveal";
+import { makeGreeting, partOfDay } from "@/lib/greeting";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileChip } from "./FileChip";
 import { CitationPanel } from "./CitationPanel";
@@ -159,7 +160,7 @@ export function ChatApp() {
     ctrl.signal.addEventListener("abort", () => reveal.flush());
     try {
       id = await ensureServer(convId);
-      for await (const ev of api.streamChat(id, prompt, useFiles, firstName, ctrl.signal)) {
+      for await (const ev of api.streamChat(id, prompt, useFiles, firstName, ctrl.signal, partOfDay())) {
         if (ev.type === "token") { acc += ev.text; reveal.push(ev.text); }
         else if (ev.type === "error") throw new Error(ev.message);
         else if (ev.type === "done") {
@@ -253,6 +254,8 @@ export function ChatApp() {
 
   const loadingConv = !!active && !active.loaded;
   const empty = !active || (!!active.loaded && active.messages.length === 0);
+  // A fresh greeting and quote for each new chat; stable while the screen is open.
+  const greeting = useMemo(() => makeGreeting(firstName), [activeId, firstName, empty]);
   const streamingHere = !!streamingId && !!active?.messages.some((m) => m.id === streamingId);
 
   const sidebar = (
@@ -309,8 +312,9 @@ export function ChatApp() {
             </div>
           ) : empty ? (
             <div className="mx-auto flex h-full max-w-[768px] flex-col justify-center px-4 py-8">
-              <h1 className="font-display text-[28px] font-bold tracking-normal md:text-[40px]">{firstName ? `Good to see you, ${firstName}.` : "Good to see you."}</h1>
-              <p className="mt-2 text-muted-foreground">Ask a question or attach a file — AURIX answers with sources.</p>
+              <h1 className="font-display text-[28px] font-bold tracking-normal md:text-[40px]">{greeting.heading}</h1>
+              <p className="mt-3 text-lg italic text-foreground/80">“{greeting.quote.text}”{greeting.quote.author ? <span className="text-sm not-italic text-muted-foreground"> — {greeting.quote.author}</span> : null}</p>
+              <p className="mt-2 text-sm text-muted-foreground">Ask a question or attach a file — AURIX answers with sources.</p>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {PROMPTS.map(({ icon: Icon, title, desc }) => (
                   <button key={title} onClick={() => send(title, { useFiles: true })} className="btn-lift rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50" style={{ boxShadow: "var(--shadow-card)" }}>
