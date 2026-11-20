@@ -169,9 +169,12 @@ export const api = {
 
   /** Streams the assistant reply as parsed SSE events. */
   async *streamChat(conversationId: string, message: string, useFiles: boolean, userName: string, signal: AbortSignal, part?: string): AsyncGenerator<ChatEvent> {
-    const body: Record<string, unknown> = { message, use_files: useFiles };
-    if (userName) body.user_name = userName;
-    if (part) body.part_of_day = part;
+    const body = {
+      message,
+      use_files: useFiles,
+      ...(userName ? { user_name: userName } : {}),
+      ...(part ? { part_of_day: part } : {}),
+    };
     const res = await request(`/conversations/${conversationId}/chat`, { ...json(body), signal });
     if (!res.body) throw new ApiError("The server sent an empty response.", 0);
     const reader = res.body.getReader();
