@@ -28,7 +28,7 @@ export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, o
     <div className="msg-in flex gap-4">
       <LogoMark className="mt-1" />
       <div className="min-w-0 flex-1">
-        {m.content ? <Markdown>{m.content}</Markdown> : (
+        {m.content ? <Markdown sources={streaming ? undefined : m.sources} onCite={onCite}>{m.content}</Markdown> : (
           <div className="flex h-7 items-center gap-1" aria-label="AURIX is typing">
             {[0, 1, 2].map((i) => <span key={i} className="typing-dot size-1.5 rounded-full bg-muted-foreground" style={{ animationDelay: `${i * 0.15}s` }} />)}
           </div>
@@ -41,7 +41,7 @@ export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, o
                 {m.sources.map((s) => (
                   <button key={s.id} title={`${s.fileName} · ${s.location}`} onClick={() => onCite?.(s, m.sources!)}
                     className="flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs hover:bg-muted">
-                    <span className="font-mono text-accent-text">[{s.id}]</span><span className="max-w-[160px] truncate">{s.fileName}</span>
+                    <span className="font-mono text-accent-text">[{s.id}]</span><span className="max-w-[140px] truncate">{s.fileName}</span>{s.location && <span className="shrink-0 text-muted-foreground">· {s.location}</span>}
                   </button>
                 ))}
               </div>
