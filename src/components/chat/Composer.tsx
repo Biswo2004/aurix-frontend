@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ClipboardEvent as ReactClipboardEvent } from "react";
 import { ArrowUp, Image as ImageIcon, Mic, Paperclip, SlidersHorizontal, Square, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -25,6 +25,28 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string, opts: {
       el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 24 * 6 + 16) + "px";
     }, [text]);
     const send = () => { const t = text.trim() || (att.length ? "Please review the attached files." : ""); if (!t || streaming || uploading) return; onSend(t, { useFiles: files }); setText(""); };
+    // Paste support: Ctrl/Cmd+V with a copied file, screenshot or image attaches it like the paperclip does.
+    // Plain text pastes are left alone; clipboards holding text AND an image (e.g. copied from Excel/Word) paste as text.
+    const onPaste = (e: ReactClipboardEvent<HTMLTextAreaElement>) => {
+      const cd = e.clipboardData;
+      if (!cd) return;
+      const files: File[] = [];
+      for (const item of Array.from(cd.items ?? [])) {
+        if (item.kind === "file") { const f = item.getAsFile(); if (f) files.push(f); }
+      }
+      if (!files.length && cd.files?.length) files.push(...Array.from(cd.files));
+      if (!files.length || cd.getData("text/plain")) return;
+      e.preventDefault();
+      const stamp = Date.now();
+      const dt = new DataTransfer();
+      files.forEach((f, i) => {
+        // Screenshots arrive as a generic "image.png"; give each a unique, readable name.
+        const generic = /^image\.\w+$/i.test(f.name) || !f.name;
+        const ext = (f.type.split("/")[1] || "png").replace("jpeg", "jpg").split("+")[0];
+        dt.items.add(generic ? new File([f], `pasted-image-${stamp}${files.length > 1 ? "-" + (i + 1) : ""}.${ext}`, { type: f.type }) : f);
+      });
+      onPick(dt.files);
+    };
     const voice = () => {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SR) { toast.error("Voice input is not supported in this browser"); return; }
@@ -40,6 +62,7 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string, opts: {
         <label htmlFor="composer" className="sr-only">Message AURIX</label>
         <textarea id="composer" ref={ta} rows={1} value={text} onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          onPaste={onPaste}
           placeholder="Ask anything, or attach a file…"
           className="block max-h-[160px] min-h-[40px] w-full resize-none bg-transparent px-2 py-2 text-[15px] leading-6 outline-none placeholder:text-muted-foreground" />
         <div className="flex items-center gap-1">
