@@ -23,4 +23,18 @@ describe("Markdown citations", () => {
   it("does nothing when there are no sources", () => {
     expect(renderToStaticMarkup(<Markdown>{"Plain [1]."}</Markdown>)).not.toContain("<button");
   });
+  it("understands the 【4†L1-L5】 style some models write and makes it clickable", () => {
+    const html = renderToStaticMarkup(<Markdown sources={sources}>{"First fact 【1†L1-L5】 and second 【2】."}</Markdown>);
+    expect(html).not.toContain("【");
+    expect(html.match(/<button/g)?.length).toBe(2);
+    expect(html).toContain('title="paper.pdf · Page 68"');
+  });
+  it("hides a marker that is still being typed while the reply streams", () => {
+    expect(renderToStaticMarkup(<Markdown>{"Growing text 【4†L1"}</Markdown>)).not.toContain("【");
+  });
+  it("shows the [n] as plain text when the marker has no matching source", () => {
+    const html = renderToStaticMarkup(<Markdown sources={sources}>{"Unknown 【9†L1-L2】."}</Markdown>);
+    expect(html).toContain("[9]");
+    expect(html).not.toContain("<button");
+  });
 });

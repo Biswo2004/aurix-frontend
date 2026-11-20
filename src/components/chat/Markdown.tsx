@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { Check, Copy } from "lucide-react";
 import type { Source } from "@/lib/types";
+import { normalizeCitations } from "@/lib/citations";
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   const [copied, setCopied] = useState(false);
@@ -35,7 +36,8 @@ function linkCitations(text: string, ids: Set<number>): string {
 
 export function Markdown({ children, sources, onCite }: { children: string; sources?: Source[] | undefined; onCite?: ((s: Source, all: Source[]) => void) | undefined }) {
   const ids = new Set((sources ?? []).map((s) => s.id));
-  const text = sources && sources.length ? linkCitations(children, ids) : children;
+  const clean = normalizeCitations(children);
+  const text = sources && sources.length ? linkCitations(clean, ids) : clean;
   return (
     <div className="prose-chat">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={{

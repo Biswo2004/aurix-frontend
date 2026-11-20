@@ -4,6 +4,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/types";
 import { displayName, initials, signOut, useSession } from "@/lib/auth";
+import { stripCitations } from "@/lib/citations";
 import { LogoMark } from "./Logo";
 import type { Theme } from "./useTheme";
 
@@ -64,7 +65,7 @@ export function Sidebar(p: Props) {
             <h3 className="px-3 pb-1 font-sans text-xs font-medium text-muted-foreground">{g}</h3>
             <ul>
               {items.map((c) => {
-                const preview = (c.messages[c.messages.length - 1]?.content ?? c.preview ?? "").replace(/[#*`|\n>-]+/g, " ").trim();
+                const preview = stripCitations(c.messages[c.messages.length - 1]?.content ?? c.preview ?? "").replace(/[#*`|\n>-]+/g, " ").trim();
                 const active = c.id === p.activeId;
                 return (
                   <li key={c.id} className="group relative">

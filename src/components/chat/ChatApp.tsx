@@ -53,9 +53,11 @@ export function ChatApp() {
   useEffect(() => {
     if (!q.data || initialised.current) return;
     initialised.current = true;
-    setConvs(q.data);
+    const list = q.data;
+    // Merge instead of replace: a chat started before the list arrived (slow cold start) must survive.
+    setConvs((prev) => { const ids = new Set(list.map((c) => c.id)); return [...prev.filter((c) => !ids.has(c.id)), ...list]; });
     const last = localStorage.getItem(LAST);
-    setActiveId(q.data.find((c) => c.id === last)?.id ?? q.data[0]?.id ?? null);
+    setActiveId((cur) => cur ?? list.find((c) => c.id === last)?.id ?? list[0]?.id ?? null);
   }, [q.data]);
   useEffect(() => {
     if (q.isError) toast.error("Couldn't load your chats", { description: errMsg(q.error), action: { label: "Retry", onClick: () => void q.refetch() } });
@@ -154,7 +156,13 @@ export function ChatApp() {
     let id = convId;
     let mid = tmpId;
     let done = false;
-    const patch = (fn: (m: Message) => Message) => update(id, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === mid ? fn(m) : m)) }));
+    // Capture the ids NOW. React runs the updater later, after `mid` may have been reassigned to the saved message id;
+    // reading `mid` inside the updater made the "done" update (sources, follow-ups) miss its message and vanish.
+    const patch = (fn: (m: Message) => Message) => {
+      const convKey = id;
+      const msgKey = mid;
+      update(convKey, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msgKey ? fn(m) : m)) }));
+    };
     const reduceMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
     const reveal = createReveal((t) => patch((m) => ({ ...m, content: t })), reduceMotion);
     ctrl.signal.addEventListener("abort", () => reveal.flush());
