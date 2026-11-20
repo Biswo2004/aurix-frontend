@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { ChatApp } from "@/components/chat/ChatApp";
 
 export const Route = createFileRoute("/")({
@@ -12,5 +13,13 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ChatApp,
+  component: Home,
 });
+
+function Home() {
+  return (
+    <AuthGate>
+      <ChatApp />
+    </AuthGate>
+  );
+}

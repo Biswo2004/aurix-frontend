@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { MoreHorizontal, Monitor, Moon, Pencil, Plus, Search, Settings, Sun, Trash2 } from "lucide-react";
+import { LogOut, MoreHorizontal, Monitor, Moon, Pencil, Plus, Search, Settings, Sun, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/types";
+import { displayName, initials, signOut, useSession } from "@/lib/auth";
 import { LogoMark } from "./Logo";
 import type { Theme } from "./useTheme";
 
@@ -24,6 +25,8 @@ type Props = {
 };
 
 export function Sidebar(p: Props) {
+  const { user } = useSession();
+  const name = displayName(user);
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const groups = useMemo(() => {
@@ -96,14 +99,16 @@ export function Sidebar(p: Props) {
         ))}
       </nav>
       <div className="flex items-center gap-2 border-t border-sidebar-border p-4">
-        <span className="flex size-8 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold">BB</span>
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold">{initials(name)}</span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">Biswojit Bal</p>
-          <p className="truncate text-xs text-muted-foreground">Pro workspace</p>
+          <p className="truncate text-sm font-medium">{name || "Account"}</p>
+          <p className="truncate text-xs text-muted-foreground">{user?.email ?? "Personal workspace"}</p>
         </div>
         <button aria-label={`Theme: ${p.theme}. Switch theme`} onClick={() => p.setTheme(nextTheme[p.theme])}
           className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><ThemeIcon className="size-4" /></button>
         <button aria-label="Settings" onClick={p.onSettings} className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><Settings className="size-4" /></button>
+        <button aria-label="Sign out" title="Sign out" onClick={() => { void signOut(); }}
+          className="flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"><LogOut className="size-4" /></button>
       </div>
     </aside>
   );
