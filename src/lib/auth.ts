@@ -59,6 +59,33 @@ export async function signUpWithPassword(name: string, email: string, password: 
   return { error: null, needsConfirmation: !data.session };
 }
 
+/**
+ * Starts Google sign-in. The browser leaves for Google, then Supabase sends it back to
+ * `redirectTo` (this site's own origin, so it works on localhost, Netlify and Lovable alike).
+ * That URL must be in Supabase > Authentication > URL Configuration > Redirect URLs.
+ */
+export async function signInWithGoogle(): Promise<AuthResult> {
+  if (typeof window === "undefined") return { error: "Google sign-in needs a browser." };
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/`,
+      queryParams: { prompt: "select_account" }, // always let the user pick the Google account
+    },
+  });
+  return { error: error ? error.message : null };
+}
+
+/** Reads an OAuth failure Supabase appended to the URL (query or hash) after the round trip. */
+export function readOAuthError(loc: { search: string; hash: string }): string | null {
+  const params = new URLSearchParams(loc.search);
+  const hash = new URLSearchParams(loc.hash.replace(/^#/, ""));
+  const desc = params.get("error_description") ?? hash.get("error_description");
+  const code = params.get("error") ?? hash.get("error");
+  if (!desc && !code) return null;
+  return (desc ?? code ?? "").replace(/\+/g, " ");
+}
+
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
