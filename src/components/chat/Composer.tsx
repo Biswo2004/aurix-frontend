@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { ArrowUp, Globe, Image as ImageIcon, Mic, Paperclip, SlidersHorizontal, Square, FileText } from "lucide-react";
+import { ArrowUp, Image as ImageIcon, Mic, Paperclip, SlidersHorizontal, Square, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -10,10 +10,9 @@ import { FileChip } from "./FileChip";
 export type ComposerHandle = { focus: () => void };
 const tool = "flex size-9 items-center justify-center rounded-[10px] text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground";
 
-export const Composer = forwardRef<ComposerHandle, { onSend: (t: string) => void; onStop: () => void; streaming: boolean; files: Attachment[]; onPick: (f: FileList) => void; onRemove: (id: string) => void }>(
+export const Composer = forwardRef<ComposerHandle, { onSend: (t: string, opts: { useFiles: boolean }) => void; onStop: () => void; streaming: boolean; files: Attachment[]; onPick: (f: FileList) => void; onRemove: (id: string) => void }>(
   function Composer({ onSend, onStop, streaming, files: att, onPick, onRemove }, ref) {
     const [text, setText] = useState("");
-    const [web, setWeb] = useState(false);
     const [files, setFiles] = useState(true);
     const [listening, setListening] = useState(false);
     const ta = useRef<HTMLTextAreaElement>(null);
@@ -25,7 +24,7 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string) => void
       const el = ta.current; if (!el) return;
       el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 24 * 6 + 16) + "px";
     }, [text]);
-    const send = () => { const t = text.trim() || (att.length ? "Please review the attached files." : ""); if (!t || streaming || uploading) return; onSend(t); setText(""); };
+    const send = () => { const t = text.trim() || (att.length ? "Please review the attached files." : ""); if (!t || streaming || uploading) return; onSend(t, { useFiles: files }); setText(""); };
     const voice = () => {
       const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SR) { toast.error("Voice input is not supported in this browser"); return; }
@@ -50,7 +49,6 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string) => void
           <DropdownMenu>
             <DropdownMenuTrigger aria-label="Tools" className={tool}><SlidersHorizontal className="size-4" /></DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuCheckboxItem checked={web} onCheckedChange={setWeb}><Globe className="size-4" /> Web search</DropdownMenuCheckboxItem>
               <DropdownMenuCheckboxItem checked={files} onCheckedChange={setFiles}><FileText className="size-4" /> Use my files</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>

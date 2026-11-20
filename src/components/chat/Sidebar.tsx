@@ -64,7 +64,7 @@ export function Sidebar(p: Props) {
             <h3 className="px-3 pb-1 font-sans text-xs font-medium text-muted-foreground">{g}</h3>
             <ul>
               {items.map((c) => {
-                const preview = c.messages[c.messages.length - 1]?.content.replace(/[#*`|\n>-]+/g, " ").trim() ?? "Empty chat";
+                const preview = (c.messages[c.messages.length - 1]?.content ?? c.preview ?? "").replace(/[#*`|\n>-]+/g, " ").trim();
                 const active = c.id === p.activeId;
                 return (
                   <li key={c.id} className="group relative">

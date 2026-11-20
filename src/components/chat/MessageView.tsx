@@ -21,7 +21,7 @@ export function UserMessage({ m }: { m: Message }) {
 
 export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, onFeedback, onFollowUp }: {
   m: Message; streaming?: boolean; isLast?: boolean; onCite?: (s: Source, all: Source[]) => void;
-  onRegenerate?: () => void; onFeedback?: (f: Feedback) => void; onFollowUp?: (q: string) => void;
+  onRegenerate?: () => void; onFeedback?: (f: Feedback, reason?: string) => void; onFollowUp?: (q: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -58,7 +58,7 @@ export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, o
                 <DropdownMenuContent align="start">
                   <DropdownMenuLabel className="text-xs text-muted-foreground">What went wrong?</DropdownMenuLabel>
                   {["Incorrect", "Off-topic", "Unsafe", "Other"].map((r) => (
-                    <DropdownMenuItem key={r} onClick={() => { onFeedback?.("down"); toast("Thanks for the feedback", { description: r }); }}>{r}</DropdownMenuItem>
+                    <DropdownMenuItem key={r} onClick={() => { onFeedback?.("down", r); toast("Thanks for the feedback", { description: r }); }}>{r}</DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
