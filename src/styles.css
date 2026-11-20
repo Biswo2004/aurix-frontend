@@ -235,3 +235,22 @@ button[role="radio"]:hover:not([aria-checked="true"]) { background: var(--accent
   button:not([role="menuitem"]):not([role="menuitemcheckbox"]), [role="button"], [role="radio"] { min-width: 40px; min-height: 40px; }
   [role="menuitem"], [role="menuitemcheckbox"] { min-height: 40px; }
 }
+
+/* ---- Light-theme text visibility fix -------------------------------------
+   The chat area (header title, AI replies, source chips, file chips, panels)
+   has no explicit text color and used to inherit it from <body> through the
+   --color-foreground alias. Set the color from the raw --foreground variable
+   at every structural level so it always follows the active theme.
+   Kept inside @layer base so utility classes (text-muted-foreground, etc.)
+   still win where a component sets its own color. */
+@layer base {
+  html, body, #root { color: var(--foreground); background-color: var(--background); }
+  main, header, aside, article, section, [role="dialog"], [role="menu"] { color: var(--foreground); }
+  [data-slot], [data-radix-popper-content-wrapper] { color: var(--foreground); }
+}
+.prose-chat, .prose-chat p, .prose-chat li, .prose-chat strong, .prose-chat em,
+.prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4, .prose-chat td { color: var(--foreground); }
+.prose-chat th { color: var(--foreground); }
+.prose-chat blockquote { color: var(--muted-foreground); }
+.prose-chat a { color: var(--link); }
+.prose-chat :not(pre) > code { color: var(--foreground); }
