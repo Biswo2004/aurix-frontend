@@ -150,22 +150,30 @@ export function ChatApp() {
     const ctrl = new AbortController(); abort.current = ctrl;
     let acc = "";
     let id = convId;
-    const patch = (fn: (m: Message) => Message) => update(id, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === tmpId ? fn(m) : m)) }));
+    let mid = tmpId;
+    let done = false;
+    const patch = (fn: (m: Message) => Message) => update(id, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === mid ? fn(m) : m)) }));
     try {
       id = await ensureServer(convId);
-      let done = false;
-      for await (const ev of api.streamChat(id, prompt, useFiles, ctrl.signal)) {
+      for await (const ev of api.streamChat(id, prompt, useFiles, firstName, ctrl.signal)) {
         if (ev.type === "token") { acc += ev.text; patch((m) => ({ ...m, content: acc })); }
         else if (ev.type === "error") throw new Error(ev.message);
-        else {
+        else if (ev.type === "done") {
           done = true;
-          patch((m) => ({ ...m, id: ev.messageId || m.id, content: acc, sources: ev.sources, followUps: ev.suggestions, feedback: null }));
+          const newId = ev.messageId || mid;
+          patch((m) => ({ ...m, id: newId, content: acc, sources: ev.sources, followUps: ev.suggestions, feedback: null }));
+          mid = newId;
+          setStreamingId(null); // answer is complete: unlock the input right away
+          // The server auto-titles new chats; pick up the saved title.
+          api.getConversation(id).then((d) => update(id, (c) => ({ ...c, title: d.title }))).catch(() => undefined);
+        } else {
+          // Follow-up suggestions arrive after "done".
+          patch((m) => ({ ...m, followUps: ev.suggestions }));
         }
       }
       if (!done && !ctrl.signal.aborted) throw new Error("The connection was interrupted before the reply finished.");
-      // The server auto-titles new chats; pick up the saved title.
-      api.getConversation(id).then((d) => update(id, (c) => ({ ...c, title: d.title }))).catch(() => undefined);
     } catch (e) {
+      if (done) { setStreamingId((cur) => (cur === tmpId || cur === mid ? null : cur)); return; } // answer already complete; only suggestions were cut off
       const stopped = ctrl.signal.aborted || (e instanceof DOMException && e.name === "AbortError");
       if (stopped) {
         patch((m) => ({ ...m, content: acc || "_Stopped._" }));
@@ -175,7 +183,7 @@ export function ChatApp() {
         toast.error("Something went wrong", { description: errMsg(e), action: { label: "Retry", onClick: () => void run(id, prompt, useFiles) } });
       }
     }
-    setStreamingId(null);
+    setStreamingId((cur) => (cur === tmpId || cur === mid ? null : cur));
   };
 
   const send = (text: string, opts?: { useFiles: boolean }) => {

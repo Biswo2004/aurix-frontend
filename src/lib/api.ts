@@ -91,6 +91,7 @@ const json = (body: unknown): RequestInit => ({ method: "POST", headers: { "Cont
 export type ChatEvent =
   | { type: "token"; text: string }
   | { type: "done"; messageId: string; sources: Source[]; suggestions: string[] }
+  | { type: "suggestions"; suggestions: string[] }
   | { type: "error"; message: string };
 
 function parseEvent(p: Record<string, unknown>): ChatEvent | null {
@@ -101,6 +102,10 @@ function parseEvent(p: Record<string, unknown>): ChatEvent | null {
       messageId: String(p["message_id"] ?? ""),
       sources: Array.isArray(p["sources"]) ? (p["sources"] as RawSource[]).map(mapSource) : [],
       suggestions: Array.isArray(p["suggestions"]) ? (p["suggestions"] as unknown[]).filter((s): s is string => typeof s === "string") : [],
+    };
+    case "suggestions": return {
+      type: "suggestions",
+      suggestions: Array.isArray(p["suggestions"]) ? (p["suggestions"] as unknown[]).filter((x): x is string => typeof x === "string") : [],
     };
     case "error": return { type: "error", message: typeof p["message"] === "string" ? p["message"] : "Something went wrong." };
     default: return null;
@@ -163,8 +168,8 @@ export const api = {
   },
 
   /** Streams the assistant reply as parsed SSE events. */
-  async *streamChat(conversationId: string, message: string, useFiles: boolean, signal: AbortSignal): AsyncGenerator<ChatEvent> {
-    const res = await request(`/conversations/${conversationId}/chat`, { ...json({ message, use_files: useFiles }), signal });
+  async *streamChat(conversationId: string, message: string, useFiles: boolean, userName: string, signal: AbortSignal): AsyncGenerator<ChatEvent> {
+    const res = await request(`/conversations/${conversationId}/chat`, { ...json(userName ? { message, use_files: useFiles, user_name: userName } : { message, use_files: useFiles }), signal });
     if (!res.body) throw new ApiError("The server sent an empty response.", 0);
     const reader = res.body.getReader();
     const decoder = new TextDecoder();

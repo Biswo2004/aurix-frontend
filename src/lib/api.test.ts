@@ -16,25 +16,27 @@ describe("api", () => {
     const fetchMock = vi.fn(async () => sse([
       'data: {"type":"token","text":"Hel"}\n\ndata: {"type":"tok',
       'en","text":"lo"}\n\n',
-      'data: {"type":"done","message_id":"m1","sources":[{"file_name":"a.pdf","page":3,"text":"excerpt"}],"suggestions":["Why?"]}\n\n',
+      'data: {"type":"done","message_id":"m1","sources":[{"file_name":"a.pdf","page":3,"text":"excerpt"}],"suggestions":[]}\n\n',
+      'data: {"type":"suggestions","suggestions":["Why?"]}\n\n',
     ]));
     vi.stubGlobal("fetch", fetchMock);
     const events = [];
-    for await (const e of api.streamChat("c1", "hi", true, new AbortController().signal)) events.push(e);
-    expect(events.map((e) => e.type)).toEqual(["token", "token", "done"]);
+    for await (const e of api.streamChat("c1", "hi", true, "Biswojit", new AbortController().signal)) events.push(e);
+    expect(events.map((e) => e.type)).toEqual(["token", "token", "done", "suggestions"]);
     const done = events[2];
-    expect(done).toMatchObject({ type: "done", messageId: "m1", suggestions: ["Why?"] });
+    expect(done).toMatchObject({ type: "done", messageId: "m1" });
+    expect(events[3]).toEqual({ type: "suggestions", suggestions: ["Why?"] });
     expect(done && done.type === "done" && done.sources[0]).toEqual({ id: 1, fileName: "a.pdf", location: "Page 3", excerpt: "excerpt" });
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toMatch(/\/conversations\/c1\/chat$/);
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer test-token");
-    expect(JSON.parse(init.body as string)).toEqual({ message: "hi", use_files: true });
+    expect(JSON.parse(init.body as string)).toEqual({ message: "hi", use_files: true, user_name: "Biswojit" });
   });
 
   it("surfaces SSE error events", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => sse(['data: {"type":"error","message":"Quota hit"}\n\n'])));
     const events = [];
-    for await (const e of api.streamChat("c1", "hi", false, new AbortController().signal)) events.push(e);
+    for await (const e of api.streamChat("c1", "hi", false, "", new AbortController().signal)) events.push(e);
     expect(events).toEqual([{ type: "error", message: "Quota hit" }]);
   });
 
