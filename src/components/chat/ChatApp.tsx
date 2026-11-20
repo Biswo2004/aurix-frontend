@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { displayName, signOut, useSession } from "@/lib/auth";
 import type { Attachment, Conversation, Feedback, Message, Source } from "@/lib/types";
 import { validateFile } from "@/lib/files";
+import { createReveal } from "@/lib/reveal";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FileChip } from "./FileChip";
 import { CitationPanel } from "./CitationPanel";
@@ -153,13 +154,17 @@ export function ChatApp() {
     let mid = tmpId;
     let done = false;
     const patch = (fn: (m: Message) => Message) => update(id, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === mid ? fn(m) : m)) }));
+    const reduceMotion = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+    const reveal = createReveal((t) => patch((m) => ({ ...m, content: t })), reduceMotion);
+    ctrl.signal.addEventListener("abort", () => reveal.flush());
     try {
       id = await ensureServer(convId);
       for await (const ev of api.streamChat(id, prompt, useFiles, firstName, ctrl.signal)) {
-        if (ev.type === "token") { acc += ev.text; patch((m) => ({ ...m, content: acc })); }
+        if (ev.type === "token") { acc += ev.text; reveal.push(ev.text); }
         else if (ev.type === "error") throw new Error(ev.message);
         else if (ev.type === "done") {
           done = true;
+          await reveal.drain(); // let the last words finish appearing before showing sources
           const newId = ev.messageId || mid;
           patch((m) => ({ ...m, id: newId, content: acc, sources: ev.sources, followUps: ev.suggestions, feedback: null }));
           mid = newId;
@@ -183,6 +188,7 @@ export function ChatApp() {
         toast.error("Something went wrong", { description: errMsg(e), action: { label: "Retry", onClick: () => void run(id, prompt, useFiles) } });
       }
     }
+    reveal.cancel();
     setStreamingId((cur) => (cur === tmpId || cur === mid ? null : cur));
   };
 
