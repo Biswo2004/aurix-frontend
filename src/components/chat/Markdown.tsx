@@ -2,7 +2,6 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Check, Copy } from "lucide-react";
 
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
@@ -16,7 +15,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <SyntaxHighlighter language={lang} style={oneDark} customStyle={{ margin: 0, borderRadius: 0, fontSize: 13, padding: 16, fontFamily: "var(--font-mono)" }}>
+      <SyntaxHighlighter language={lang} useInlineStyles={false}>
         {code}
       </SyntaxHighlighter>
     </div>

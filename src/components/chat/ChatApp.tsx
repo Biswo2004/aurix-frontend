@@ -141,13 +141,13 @@ export function ChatApp() {
       <main onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }}
         onDrop={(e) => { e.preventDefault(); setDragging(false); if (e.dataTransfer.files.length) pickFiles(e.dataTransfer.files); }}
         className="relative flex min-w-0 flex-1 flex-col bg-chat md:my-2 md:mr-2 md:rounded-2xl md:border md:border-border">
-        {dragging && <div className="pointer-events-none absolute inset-2 z-20 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary bg-background/90 text-sm"><UploadCloud className="size-8 text-primary" /><p className="font-medium">Drop files to attach</p><p className="text-muted-foreground">PDF, DOCX, TXT, MD, CSV, XLSX, images · up to 20 MB</p></div>}
+        {dragging && <div className="pointer-events-none absolute inset-2 z-20 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary bg-background/90 text-sm"><UploadCloud className="size-8 text-accent-text" /><p className="font-medium">Drop files to attach</p><p className="text-muted-foreground">PDF, DOCX, TXT, MD, CSV, XLSX, images · up to 20 MB</p></div>}
         <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <button aria-label="Open chats" className="flex size-9 items-center justify-center rounded-[10px] hover:bg-muted md:hidden" onClick={() => setDrawer(true)}><Menu className="size-5" /></button>
           {active && !empty ? (
             <input aria-label="Chat title" value={active.title} onChange={(e) => update(active.id, (c) => ({ ...c, title: e.target.value }))}
-              className="min-w-0 flex-1 truncate rounded-md bg-transparent px-2 py-1 font-display text-[15px] font-semibold outline-none hover:bg-muted focus:bg-muted" />
-          ) : <span className="flex-1 px-2 font-display text-[15px] font-semibold">New chat</span>}
+              className="min-w-0 flex-1 truncate rounded-md bg-transparent px-2 py-1 font-display text-lg font-semibold outline-none hover:bg-muted focus:bg-muted" />
+          ) : <span className="flex-1 px-2 font-display text-lg font-semibold">New chat</span>}
           <span className="hidden items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:flex">
             <span className="size-1.5 rounded-full bg-success" /> Aurix Pro
           </span>
@@ -174,14 +174,14 @@ export function ChatApp() {
         <div className="flex-1 overflow-y-auto">
           {empty ? (
             <div className="mx-auto flex h-full max-w-[768px] flex-col justify-center px-4 py-8">
-              <h1 className="font-display text-3xl font-semibold tracking-tight">Good to see you, Biswojit.</h1>
+              <h1 className="font-display text-[28px] font-bold tracking-normal md:text-[40px]">Good to see you, Biswojit.</h1>
               <p className="mt-2 text-muted-foreground">Ask a question or attach a file — AURIX answers with sources.</p>
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {PROMPTS.map(({ icon: Icon, title, desc }) => (
                   <button key={title} onClick={() => send(title)} className="btn-lift rounded-2xl border border-border bg-card p-4 text-left hover:bg-muted/50" style={{ boxShadow: "var(--shadow-card)" }}>
-                    <Icon className="size-5 text-primary" />
+                    <Icon className="size-5 text-accent-text" />
                     <p className="mt-4 text-sm font-medium">{title}</p>
-                    <p className="text-sm text-muted-foreground">{desc}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
                   </button>
                 ))}
               </div>

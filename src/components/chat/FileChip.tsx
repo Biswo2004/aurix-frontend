@@ -15,7 +15,7 @@ export function FileChip({ f, onRemove }: { f: Attachment; onRemove?: () => void
   return (
     <div className="relative flex w-[220px] items-center gap-2 overflow-hidden rounded-xl border border-border bg-card p-2">
       {f.previewUrl ? <img src={f.previewUrl} alt="" className="size-9 shrink-0 rounded-md object-cover" /> : (
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-primary"><Icon className="size-4" /></span>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-accent-text"><Icon className="size-4" /></span>
       )}
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{f.name}</p>

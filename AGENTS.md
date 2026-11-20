@@ -31,3 +31,4 @@ use the editor.
 # AGENTS
 - All backend calls go through src/lib/api.ts (mock now) so the FastAPI backend can be swapped in via VITE_API_URL.
 - File limits live in src/lib/files.ts, covered by files.test.ts.
+- Theme colors and syntax highlighting use semantic variables in src/styles.css mapped through Tailwind v4 @theme inline; no Tailwind config is used because this project is CSS-first.

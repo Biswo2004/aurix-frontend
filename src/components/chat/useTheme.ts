@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 export type Theme = "light" | "dark" | "system";
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("system");
-  useEffect(() => { setTheme((localStorage.getItem("aurix.theme") as Theme) || "system"); }, []);
+  const [theme, setTheme] = useState<Theme>("dark");
+  useEffect(() => { setTheme((localStorage.getItem("aurix.theme") as Theme) || "dark"); }, []);
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => document.documentElement.classList.toggle("dark", theme === "dark" || (theme === "system" && mq.matches));

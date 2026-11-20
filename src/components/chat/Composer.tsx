@@ -34,7 +34,7 @@ export const Composer = forwardRef<ComposerHandle, { onSend: (t: string) => void
       r.onend = () => setListening(false); setListening(true); r.start();
     };
     return (
-      <div className="mx-auto w-full max-w-[768px] rounded-2xl border border-border bg-card p-2" style={{ boxShadow: "var(--shadow-input)" }}>
+      <div className="composer-surface mx-auto w-full max-w-[768px] rounded-2xl border border-border bg-card p-2">
         {att.length > 0 && <div className="flex flex-wrap gap-2 p-1 pb-2">{att.map((a) => <FileChip key={a.id} f={a} onRemove={() => onRemove(a.id)} />)}</div>}
         <input ref={fileIn} type="file" multiple accept={ACCEPT_ATTR} hidden onChange={(e) => { if (e.target.files) onPick(e.target.files); e.target.value = ""; }} />
         <input ref={imgIn} type="file" multiple accept=".jpg,.jpeg,.png,.webp" hidden onChange={(e) => { if (e.target.files) onPick(e.target.files); e.target.value = ""; }} />

@@ -14,7 +14,7 @@ export function UserMessage({ m }: { m: Message }) {
   return (
     <div className="msg-in flex flex-col items-end gap-2">
       {m.files && m.files.length > 0 && <div className="flex max-w-[85%] flex-wrap justify-end gap-2">{m.files.map((f) => <FileChip key={f.id} f={f} />)}</div>}
-      <div className="max-w-[85%] rounded-[18px] bg-user-bubble px-4 py-2 text-[15px] leading-relaxed whitespace-pre-wrap text-user-bubble-foreground">{m.content}</div>
+      <div className="max-w-[85%] rounded-[18px] border border-user-bubble-border bg-user-bubble px-4 py-2 text-base leading-[1.65] whitespace-pre-wrap text-user-bubble-foreground">{m.content}</div>
     </div>
   );
 }
@@ -41,7 +41,7 @@ export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, o
                 {m.sources.map((s) => (
                   <button key={s.id} title={`${s.fileName} · ${s.location}`} onClick={() => onCite?.(s, m.sources!)}
                     className="flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs hover:bg-muted">
-                    <span className="font-mono text-primary">[{s.id}]</span><span className="max-w-[160px] truncate">{s.fileName}</span>
+                    <span className="font-mono text-accent-text">[{s.id}]</span><span className="max-w-[160px] truncate">{s.fileName}</span>
                   </button>
                 ))}
               </div>
@@ -51,7 +51,7 @@ export function AssistantMessage({ m, streaming, isLast, onCite, onRegenerate, o
                 {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
               </button>
               {isLast && <button aria-label="Regenerate reply" className={iconBtn} onClick={onRegenerate}><RefreshCw className="size-4" /></button>}
-              <button aria-label="Good reply" aria-pressed={m.feedback === "up"} className={cn(iconBtn, m.feedback === "up" && "text-primary")}
+              <button aria-label="Good reply" aria-pressed={m.feedback === "up"} className={cn(iconBtn, m.feedback === "up" && "text-accent-text")}
                 onClick={() => { onFeedback?.(m.feedback === "up" ? null : "up"); }}><ThumbsUp className="size-4" /></button>
               <DropdownMenu>
                 <DropdownMenuTrigger aria-label="Bad reply" className={cn(iconBtn, m.feedback === "down" && "text-destructive")}><ThumbsDown className="size-4" /></DropdownMenuTrigger>

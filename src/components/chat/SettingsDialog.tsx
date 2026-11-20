@@ -25,7 +25,7 @@ export function SettingsDialog(p: Props) {
             <div role="radiogroup" aria-label="Theme" className="flex rounded-[10px] border border-border p-1">
               {([["light", Sun], ["dark", Moon], ["system", Monitor]] as const).map(([t, I]) => (
                 <button key={t} role="radio" aria-checked={p.theme === t} aria-label={t} onClick={() => p.setTheme(t)}
-                  className={cn("flex size-8 items-center justify-center rounded-md text-muted-foreground", p.theme === t && "bg-muted text-foreground")}><I className="size-4" /></button>
+                  className={cn("flex size-8 items-center justify-center rounded-md text-muted-foreground", p.theme === t && "bg-primary text-primary-foreground")}><I className="size-4" /></button>
               ))}
             </div>
           </div>

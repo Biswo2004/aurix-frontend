@@ -15,7 +15,7 @@ export function CitationPanel({ data, onClose }: { data: { s: Source; all: Sourc
           {data?.all.map((s) => (
             <article key={s.id} className={cn("rounded-2xl border p-4", s.id === data.s.id ? "border-primary" : "border-border")} style={{ boxShadow: "var(--shadow-card)" }}>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-primary">[{s.id}]</span>
+                <span className="font-mono text-sm text-accent-text">[{s.id}]</span>
                 <FileText className="size-4 text-muted-foreground" />
                 <span className="truncate text-sm font-medium">{s.fileName}</span>
               </div>
