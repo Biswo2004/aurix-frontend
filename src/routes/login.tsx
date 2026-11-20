@@ -1,9 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { LogoMark } from "@/components/chat/Logo";
 import { useTheme } from "@/components/chat/useTheme";
-import { signInWithPassword, signUpWithPassword, useSession } from "@/lib/auth";
+import { readOAuthError, signInWithGoogle, signInWithPassword, signUpWithPassword, useSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -14,6 +14,17 @@ export const Route = createFileRoute("/login")({
   }),
   component: LoginPage,
 });
+
+function GoogleIcon() {
+  return (
+    <svg viewBox="0 0 48 48" className="size-5" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z" />
+      <path fill="#FBBC05" d="M10.5 28.7a14.5 14.5 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.6l7.9-6.1z" />
+      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
+    </svg>
+  );
+}
 
 const field =
   "h-11 w-full rounded-[10px] border border-control-border bg-input px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring";
@@ -30,9 +41,36 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
+  const [googleBusy, setGoogleBusy] = useState(false);
+
   useEffect(() => {
     if (!loading && session) navigate({ to: "/", replace: true });
   }, [loading, session, navigate]);
+
+  // Show a Google/Supabase error that came back in the URL, then tidy the address bar.
+  useEffect(() => {
+    const err = readOAuthError(window.location);
+    if (err) {
+      setError(`Google sign-in failed: ${err}`);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
+  async function onGoogle() {
+    setError(null);
+    setInfo(null);
+    setGoogleBusy(true);
+    try {
+      const r = await signInWithGoogle();
+      if (r.error) {
+        setError(r.error);
+        setGoogleBusy(false);
+      } // on success the browser navigates to Google, so keep the spinner
+    } catch {
+      setError("Could not start Google sign-in. Check your connection and try again.");
+      setGoogleBusy(false);
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -75,7 +113,19 @@ function LoginPage() {
           {signup ? "Start asking questions about your files." : "Sign in to continue to your chats."}
         </p>
 
-        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+        <button type="button" onClick={onGoogle} disabled={googleBusy || busy}
+          className="btn-lift mt-6 flex h-11 w-full items-center justify-center gap-3 rounded-xl border border-control-border bg-card text-sm font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60">
+          {googleBusy ? <Loader2 className="size-4 animate-spin" /> : <GoogleIcon />}
+          Continue with Google
+        </button>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
+          <span className="h-px flex-1 bg-border" />
+          or
+          <span className="h-px flex-1 bg-border" />
+        </div>
+
+        <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           {signup && (
             <label className="block">
               <span className="mb-1 block text-sm font-medium">Name</span>
@@ -108,6 +158,10 @@ function LoginPage() {
             onClick={() => { setMode(signup ? "signin" : "signup"); setError(null); setInfo(null); }}>
             {signup ? "Sign in" : "Create an account"}
           </button>
+        </p>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          By continuing you agree to our{" "}
+          <Link to="/privacy" className="underline underline-offset-2">Privacy Policy</Link>.
         </p>
       </div>
     </div>
