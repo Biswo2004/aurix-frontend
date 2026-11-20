@@ -1,0 +1,10 @@
+# Netlify build for AURIX AI (TanStack Start + Nitro).
+# NITRO_PRESET=netlify makes the build emit a Netlify server function (SSR) plus static
+# files in dist/. The Lovable default (Cloudflare) is untouched when this variable is unset.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NITRO_PRESET = "netlify"
+  NODE_VERSION = "22"
