@@ -280,7 +280,7 @@ export function ChatApp() {
               className="min-w-0 flex-1 truncate rounded-md bg-transparent px-2 py-1 font-display text-lg font-semibold outline-none hover:bg-muted focus:bg-muted" />
           ) : <span className="flex-1 px-2 font-display text-lg font-semibold">New chat</span>}
           <span className="hidden items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground sm:flex">
-            <span className="size-1.5 rounded-full bg-success" /> Gemma 4
+            <span className="size-1.5 rounded-full bg-success" /> AURIX AI
           </span>
           {active?.files && active.files.length > 0 && (
             <Popover>
