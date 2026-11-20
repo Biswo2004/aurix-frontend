@@ -40,6 +40,14 @@ describe("api", () => {
     expect(events).toEqual([{ type: "error", message: "Quota hit" }]);
   });
 
+  it("sends the part of day only when given", async () => {
+    const fetchMock = vi.fn(async () => sse(['data: {"type":"done","message_id":"m1","sources":[],"suggestions":[]}\n\n']));
+    vi.stubGlobal("fetch", fetchMock);
+    for await (const _ of api.streamChat("c1", "hi", true, "Sam", new AbortController().signal, "evening")) void _;
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toEqual({ message: "hi", use_files: true, user_name: "Sam", part_of_day: "evening" });
+  });
+
   it("turns HTTP errors into ApiError with the backend detail", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ detail: "Conversation not found" }), { status: 404 })));
     await expect(api.getConversation("x")).rejects.toMatchObject({ status: 404, message: "Conversation not found" });
